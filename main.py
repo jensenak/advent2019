@@ -102,37 +102,18 @@ class wiremap:
 
 
 for t in testData:
-    grid = t["grid"]
-    while True:
-        w = wiremap(*grid)
-        try:
-            w.plot(t["A"], w.setpoint)
-            w.plot(t["B"], w.crosspoint)
-        except bounds as b:
-            grid = b.grid
-            continue
-        break
-    print(f"Succeeded with grid {grid}")
-    cross = min(w.xpoints)
-    if cross == t["D"]:
+    w = wiremap(*t[grid])
+    w.plot(t["A"], w.countpoint)
+    w.plot(t["B"], w.countcross)
+    cross = min(w.spoints)
+    if cross == t["S"]:
         print("Passed")
     else:
-        print(f"Failed! Expected {t['D']} but got {cross}")
+        print(f"Failed! Expected {t['S']} but got {cross}")
         w.show()
 
-grid = realData["grid"]
-while True:
-    w = wiremap(*grid)
-    try:
-        w.plot(realData["A"], w.setpoint)
-        w.plot(realData["B"], w.crosspoint)
-    except bounds as b:
-        if grid == b.grid:
-            print("Grid didn't change")
-            sys.exit(1)
-        grid = b.grid
-        print(f"Trying again with {grid}")
-        continue
-    break
-print(f"Succeeded with grid {grid}")
-print(min(w.xpoints))
+
+w = wiremap(*realData[grid])
+w.plot(realData["A"], w.countpoint)
+w.plot(realData["B"], w.countcross)
+print(min(w.spoints))
