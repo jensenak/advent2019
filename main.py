@@ -41,22 +41,27 @@ class wiremap:
         self.xpoints = []
         self.spoints = []
         self.steps = 0
+        self.xsteps = 0
         self.wmap = [[0 for y in range(sy + 1)] for x in range(sx + 1)]  # grid size
         self.setpoint = lambda x, y: 1
 
     def countpoint(self, x, y):
         self.steps += 1
         if self.wmap[x][y] == 0:
-            return self.steps
+            return self.steps - 1
         return self.wmap[x][y]
 
     def countcross(self, x, y):
-        self.steps += 1
-        if self.wmap[x][y] != 0:
-            self.spoints.append(self.wmap[x][y] + self.steps)
-        return self.wmap[x][y]
+        v = self.wmap[x][y]
+        if v != 0:
+            print(f"Intersection at {x}, {y}, {self.xsteps}, {v}")
+            self.spoints.append(v + self.xsteps)
+        self.xsteps += 1
+        return -self.xsteps
 
     def crosspoint(self, x, y):
+        if x == self.x and y == self.y:
+            return 0
         if self.wmap[x][y] == 1:
             self.xpoints.append(abs(self.x - x) + abs(self.y - y))
             return 2
@@ -72,19 +77,19 @@ class wiremap:
             try:
                 if d == "U":
                     y -= n
-                    for ny in range(y, y + n):
+                    for ny in range(y + n, y, -1):
                         self.wmap[x][ny] = f(x, ny)
                 if d == "D":
                     y += n
-                    for ny in range(y, y - n, -1):
+                    for ny in range(y - n, y):
                         self.wmap[x][ny] = f(x, ny)
                 if d == "L":
                     x -= n
-                    for nx in range(x, x + n):
+                    for nx in range(x + n, x, -1):
                         self.wmap[nx][y] = f(nx, y)
                 if d == "R":
                     x += n
-                    for nx in range(x, x - n, -1):
+                    for nx in range(x - n, x):
                         self.wmap[nx][y] = f(nx, y)
             except IndexError:
                 # print(f"Error with {self.sx}, {self.sy}, {self.x}, {self.y}, {x}, {y}")
@@ -95,25 +100,37 @@ class wiremap:
                 raise bounds(nsx, nsy, nx, ny)
 
     def show(self):
+        print(w.xpoints)
         for row in self.wmap:
-            for col in row:
-                print(col, end="")
+            # print(row)
+            for val in row:
+                if val > 0:
+                    print("+", end="")
+                elif val < 0:
+                    print("-", end="")
+                else:
+                    print(".", end="")
             print()
 
 
 for t in testData:
-    w = wiremap(*t[grid])
+    w = wiremap(*t["grid"])
     w.plot(t["A"], w.countpoint)
     w.plot(t["B"], w.countcross)
     cross = min(w.spoints)
     if cross == t["S"]:
+        # w.plot(t["A"], w.setpoint)
+        # w.plot(t["B"], w.crosspoint)
+        # cross = min(w.xpoints)
+        # if cross == t["D"]:
         print("Passed")
     else:
         print(f"Failed! Expected {t['S']} but got {cross}")
+        # print(f"Failed! Expected {t['D']} but got {cross}")
         w.show()
+        sys.exit()
 
-
-w = wiremap(*realData[grid])
-w.plot(realData["A"], w.countpoint)
-w.plot(realData["B"], w.countcross)
-print(min(w.spoints))
+# w = wiremap(*realData["grid"])
+# w.plot(realData["A"], w.countpoint)
+# w.plot(realData["B"], w.countcross)
+# print(min(w.spoints))
