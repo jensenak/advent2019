@@ -1,5 +1,4 @@
 import sys
-from time import sleep
 
 testData = [
     {"A": "R8,U5,L5,D3", "B": "U7,R6,D4,L4", "D": 6, "S": 30, "grid": [10, 10, 0, 0]},
@@ -25,112 +24,78 @@ realData = {
     "grid": [8309, 19405, 2031, 3289],
 }
 
-
-class bounds(Exception):
-    def __init__(self, sx, sy, x, y):
-        super().__init__("Out of Bounds")
-        self.grid = [sx, sy, x, y]
+a = []
+b = []
 
 
 class wiremap:
-    def __init__(self, sx, sy, x, y):
-        self.sx = sx  # dimensions
-        self.sy = sy
-        self.x = x  # starting position
-        self.y = y
-        self.xpoints = []
-        self.spoints = []
-        self.steps = 0
-        self.xsteps = 0
-        self.wmap = [[0 for y in range(sy + 1)] for x in range(sx + 1)]  # grid size
-        self.setpoint = lambda x, y: 1
+    def __init__(self):
+        self.points = [(0, 0)]
 
-    def countpoint(self, x, y):
-        self.steps += 1
-        if self.wmap[x][y] == 0:
-            return self.steps - 1
-        return self.wmap[x][y]
+    def processList(self, data):
+        for op in data.split(","):
+            self.addPoint(op)
 
-    def countcross(self, x, y):
-        v = self.wmap[x][y]
-        if v != 0:
-            print(f"Intersection at {x}, {y}, {self.xsteps}, {v}")
-            self.spoints.append(v + self.xsteps)
-        self.xsteps += 1
-        return -self.xsteps
+    def addPoint(self, op):
+        # get heading and distance
+        h = op[0]
+        d = int(op[1:])
+        # vectors based on bottom left 0,0
+        if h == "U":
+            v = (0, 1)
+        if h == "D":
+            v = (0, -1)
+        if h == "L":
+            v = (-1, 0)
+        if h == "R":
+            v = (1, 0)
+        for _ in range(d):
+            px = self.points[-1][0] + v[0]
+            py = self.points[-1][1] + v[1]
+            self.points.append((px, py))
 
-    def crosspoint(self, x, y):
-        if x == self.x and y == self.y:
-            return 0
-        if self.wmap[x][y] == 1:
-            self.xpoints.append(abs(self.x - x) + abs(self.y - y))
-            return 2
-        return 0
+    def commonPoints(self, wmap):
+        a = set(self.points[1:])  # set discarding starting point
+        b = set(wmap.points[1:])
+        return a.intersection(b)
 
-    def plot(self, s, f):
-        x = int(self.x)
-        y = int(self.y)
-        ops = s.split(",")
-        for op in ops:
-            d = op[0]
-            n = int(op[1:])
-            try:
-                if d == "U":
-                    y -= n
-                    for ny in range(y + n, y, -1):
-                        self.wmap[x][ny] = f(x, ny)
-                if d == "D":
-                    y += n
-                    for ny in range(y - n, y):
-                        self.wmap[x][ny] = f(x, ny)
-                if d == "L":
-                    x -= n
-                    for nx in range(x + n, x, -1):
-                        self.wmap[nx][y] = f(nx, y)
-                if d == "R":
-                    x += n
-                    for nx in range(x - n, x):
-                        self.wmap[nx][y] = f(nx, y)
-            except IndexError:
-                # print(f"Error with {self.sx}, {self.sy}, {self.x}, {self.y}, {x}, {y}")
-                nsx = max(self.sx, x) - min(0, x)
-                nsy = max(self.sy, y) - min(0, y)
-                nx = max(self.x, -x)
-                ny = max(self.y, -y)
-                raise bounds(nsx, nsy, nx, ny)
+    def manhattan(self, wmap):
+        return [abs(i[0]) + abs(i[1]) for i in self.commonPoints(wmap)]
 
-    def show(self):
-        print(w.xpoints)
-        for row in self.wmap:
-            # print(row)
-            for val in row:
-                if val > 0:
-                    print("+", end="")
-                elif val < 0:
-                    print("-", end="")
-                else:
-                    print(".", end="")
-            print()
+    def countSteps(self, point):
+        return self.points.index(point)
 
 
-for t in testData:
-    w = wiremap(*t["grid"])
-    w.plot(t["A"], w.countpoint)
-    w.plot(t["B"], w.countcross)
-    cross = min(w.spoints)
-    if cross == t["S"]:
-        # w.plot(t["A"], w.setpoint)
-        # w.plot(t["B"], w.crosspoint)
-        # cross = min(w.xpoints)
-        # if cross == t["D"]:
-        print("Passed")
+def fewest(a, b):
+    out = []
+    for c in a.commonPoints(b):
+        one = a.points.index(c)
+        two = b.points.index(c)
+        out.append(one + two)
+    return out
+
+
+for test in testData:
+    a = wiremap()
+    b = wiremap()
+    a.processList(test["A"])
+    b.processList(test["B"])
+    close = min(a.manhattan(b))
+    if close == test["D"]:
+        print("Passed!")
     else:
-        print(f"Failed! Expected {t['S']} but got {cross}")
-        # print(f"Failed! Expected {t['D']} but got {cross}")
-        w.show()
-        sys.exit()
+        print(f"Failed! Expected {test['D']} but got {close}")
+        sys.exit(1)
+    few = fewest(a, b)
+    if min(few) == test["S"]:
+        print("Passed #2!")
+    else:
+        print(f"Failed! Expected {test['D']} but got {min(few)}")
+        sys.exit(1)
 
-# w = wiremap(*realData["grid"])
-# w.plot(realData["A"], w.countpoint)
-# w.plot(realData["B"], w.countcross)
-# print(min(w.spoints))
+a = wiremap()
+b = wiremap()
+a.processList(realData["A"])
+b.processList(realData["B"])
+print(min(a.manhattan(b)))
+print(min(fewest(a, b)))
