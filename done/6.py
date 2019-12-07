@@ -68,4 +68,3 @@ cur = system["YOU"]
 path = cur.parentSearch(system["SAN"])
 print(path)
 print(len(path))
-print(len(set(path)))
