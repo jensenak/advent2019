@@ -1,15 +1,19 @@
 with open("data.txt") as f:
     data = f.readline()
 
-pic = [0 for _ in range(15000)]
+pic = ["2" for _ in range(150)]
 for z in range(100):
     for x in range(150):
-        d = data[x * z]
-        if d != 2:
+        d = data[x + (z * 150)]
+        if pic[x] == "2":
             pic[x] = d
-for y in range(6):
-    for x in range(25):
-        print(pic[y * 25 + x], end="")
+for i in range(len(pic)):
+    if i % 25 == 0:
+        print()
+    if pic[i] == "0":
+        print(" ", end="")
+    else:
+        print(pic[i], end="")
 # print(len(data))
 
 # mn = 150
