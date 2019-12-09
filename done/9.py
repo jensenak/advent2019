@@ -22,14 +22,19 @@ class ioQueue:
 
 class dynamicMemory(list):
     def __getitem__(self, idx):
-        if idx >= len(self):
-            log.debug(f"{idx} out of range, returning 0")
+        if isinstance(idx, slice):
+            return [
+                self[i]
+                for i in range(idx.start or 0, idx.stop or len(self), idx.step or 1)
+            ]
+        elif idx >= len(self):
+            log.trace(f"{idx} out of range, returning 0")
             return 0
         return list.__getitem__(self, idx)
 
     def __setitem__(self, idx, v):
         if idx >= len(self):
-            log.debug(f"{idx} is greater than {len(self)}, growing list")
+            log.trace(f"{idx} is greater than {len(self)}, growing list")
             self.extend([0] * (idx + 1 - len(self)))
         list.__setitem__(self, idx, v)
 
